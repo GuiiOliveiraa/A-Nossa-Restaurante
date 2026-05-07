@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A NOSSA | Delivery Profissional</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <header class="main-header">
+        <div class="container navbar">
+            <div class="brand">
+                <div class="logo-badge"><img src="/src/Logo.PNG" alt=""></div>
+                <div>
+                    <h1 class="brand-name">A Nossa Restaurante</h1>
+                    <span class="status-online">● Aberto para Pedidos</span>
+                </div>
+            </div>
+            <div class="cart-trigger" onclick="toggleCart()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span id="cart-counter">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container content-wrapper">
+        <h2 class="section-title">Nosso Cardápio</h2>
+        <div class="menu-grid" id="menu-grid">
+            </div>
+    </main>
+
+    <aside class="side-cart" id="side-cart">
+        <div class="cart-header">
+            <h3>Meu Carrinho</h3>
+            <button onclick="toggleCart()" class="close-btn">&times;</button>
+        </div>
+        <div class="cart-items" id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="summary-line">
+                <span>Total do Pedido</span>
+                <span id="subtotal">R$ 0,00</span>
+            </div>
+            <button class="btn-checkout" onclick="openAddressStep()">
+                Próximo Passo: Entrega
+            </button>
+        </div>
+    </aside>
+
+    <div id="modal-overlay" class="modal-hidden">
+        <div class="modal-content" id="modal-content-area">
+            </div>
+    </div>
+
+    <script src="./js/script.js"></script>
+</body>
+</html>
