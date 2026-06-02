@@ -98,9 +98,9 @@ Orientação: **Professora Ana Paula Müller Giancoli**
 
 ---
 
-Para mudar: 
-- Adicionar opção de alterar a quantidade no carrinho
-- Adicionar na parte de finalizar o pedido: Forma de pagamento (Pix, Credito, Debito) / Observações do cliente (ex: não quero salada)
-- Adicionar categorização dos produtos (Promoção do dia, Cardapio normal, Bebidas, Sobremesas)
-- Fazer AdminPage que permite: Personalização e edição total dos produtos
-- Aba monte o seu prato
+Alterações implementadas:
+- Alteração de quantidade diretamente no carrinho
+- Finalização com forma de pagamento e observações do cliente
+- Categorias: Promoção do dia, Cardápio normal, Bebidas e Sobremesas
+- AdminPage para cadastrar, editar, remover e ativar/desativar produtos
+- Aba "Monte o seu prato" com combinações personalizadas
