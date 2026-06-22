@@ -57,7 +57,8 @@ button {
 .nav-actions,
 .page-title-row,
 .admin-actions,
-.builder-header {
+.builder-header,
+.header-inline-actions {
     display: flex;
     align-items: center;
 }
@@ -157,6 +158,45 @@ button {
 .content-wrapper {
     padding-top: 28px;
     padding-bottom: 42px;
+}
+
+.auth-page {
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 520px;
+    background: linear-gradient(180deg, #ffffff 0%, #fff8f6 100%);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 28px;
+    display: grid;
+    gap: 22px;
+}
+
+.auth-copy {
+    margin-top: 8px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.auth-form {
+    display: grid;
+}
+
+.form-error {
+    margin: -2px 0 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #fff1f2;
+    border: 1px solid #f5c2c7;
+    color: #a61b2b;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .is-hidden {
@@ -541,6 +581,10 @@ label {
     gap: 10px;
 }
 
+.header-inline-actions {
+    gap: 10px;
+}
+
 .admin-list {
     display: grid;
     gap: 12px;
@@ -623,7 +667,8 @@ label {
     }
 
     .page-title-row,
-    .builder-header {
+    .builder-header,
+    .header-inline-actions {
         align-items: flex-start;
         flex-direction: column;
     }

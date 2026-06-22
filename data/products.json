@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "name": "Prato Executivo Frango",
+    "price": 50,
+    "desc": "Arroz, feijao, fritas e salada.",
+    "category": "promocao",
+    "image": "Logo.PNG",
+    "available": true
+  },
+  {
+    "id": 2,
+    "name": "Marmita G - Carne Assada",
+    "price": 32,
+    "desc": "Acompanha guarnicao do dia.",
+    "category": "normal",
+    "image": "Logo.PNG",
+    "available": true
+  },
+  {
+    "id": 3,
+    "name": "Prato Executivo Omelete",
+    "price": 22.9,
+    "desc": "Arroz, feijao, legumes e salada.",
+    "category": "normal",
+    "image": "Logo.PNG",
+    "available": true
+  },
+  {
+    "id": 4,
+    "name": "Suco Natural Laranja",
+    "price": 9,
+    "desc": "500ml espremido na hora.",
+    "category": "bebidas",
+    "image": "Logo.PNG",
+    "available": true
+  },
+  {
+    "id": 5,
+    "name": "Refrigerante Lata",
+    "price": 6.5,
+    "desc": "350ml gelado.",
+    "category": "bebidas",
+    "image": "Logo.PNG",
+    "available": true
+  },
+  {
+    "id": 6,
+    "name": "Pudim Artesanal",
+    "price": 12,
+    "desc": "Calda de caramelo 150g.",
+    "category": "sobremesas",
+    "image": "Logo.PNG",
+    "available": true
+  }
+]

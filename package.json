@@ -1,0 +1,17 @@
+{
+  "name": "a-nossa-restaurante",
+  "version": "1.0.0",
+  "description": "Sistema de delivery com painel administrativo protegido por autenticacao.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

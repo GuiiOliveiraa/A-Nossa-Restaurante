@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,12 +21,11 @@
           </div>
           <div>
             <h1 class="brand-name">A Nossa Restaurante</h1>
-            <span class="status-online">● Aberto para Pedidos</span>
+            <span class="status-online">● Aberto para pedidos</span>
           </div>
         </div>
 
         <div class="nav-actions">
-          <!-- Listeners adicionados via addEventListener em main.js -->
           <button class="admin-trigger">Admin</button>
           <button class="cart-trigger" aria-label="Abrir carrinho">
             <svg
@@ -62,20 +61,66 @@
         <div class="menu-grid" id="menu-grid"></div>
       </section>
 
+      <section id="login-page" class="auth-page is-hidden">
+        <div class="auth-card">
+          <div>
+            <span class="eyebrow">Acesso restrito</span>
+            <h2 class="section-title">Entrar no painel administrativo</h2>
+            <p class="auth-copy">
+              Use suas credenciais para acessar o gerenciamento de produtos.
+            </p>
+          </div>
+
+          <form class="auth-form" id="login-form">
+            <label>
+              Usuário ou e-mail
+              <input
+                type="text"
+                id="login-identifier"
+                class="input-field"
+                autocomplete="username"
+                required
+              />
+            </label>
+
+            <label>
+              Senha
+              <input
+                type="password"
+                id="login-password"
+                class="input-field"
+                autocomplete="current-password"
+                required
+              />
+            </label>
+
+            <p id="login-error" class="form-error is-hidden" aria-live="polite"></p>
+
+            <div class="admin-actions">
+              <button class="btn-primary" type="submit">Entrar</button>
+              <button class="btn-secondary" type="button" id="btn-login-back">
+                Voltar ao cardápio
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
       <section id="admin-page" class="admin-page is-hidden">
         <div class="page-title-row">
           <div>
-            <span class="eyebrow">AdminPage</span>
+            <span class="eyebrow">Admin</span>
             <h2 class="section-title">Gerenciar produtos</h2>
           </div>
-          <!-- Listener adicionado via addEventListener em main.js -->
-          <button class="btn-secondary" id="btn-back-to-menu">
-            Voltar ao cardápio
-          </button>
+          <div class="header-inline-actions">
+            <button class="btn-secondary" id="btn-back-to-menu" type="button">
+              Voltar ao cardápio
+            </button>
+            <button class="btn-danger" id="btn-logout" type="button">Sair</button>
+          </div>
         </div>
 
         <div class="admin-layout">
-          <!-- Listener de submit adicionado via addEventListener em main.js -->
           <form class="admin-form" id="product-form">
             <input type="hidden" id="product-id" />
 
@@ -139,7 +184,6 @@
 
             <div class="admin-actions">
               <button class="btn-primary" type="submit">Salvar produto</button>
-              <!-- Listener adicionado via addEventListener em main.js -->
               <button class="btn-secondary" type="button" id="btn-reset-form">
                 Limpar
               </button>
@@ -154,7 +198,6 @@
     <aside class="side-cart" id="side-cart">
       <div class="cart-header">
         <h3>Meu Carrinho</h3>
-        <!-- Listener adicionado via addEventListener em main.js -->
         <button class="close-btn" aria-label="Fechar carrinho">&times;</button>
       </div>
       <div class="cart-items" id="cart-items"></div>
@@ -163,7 +206,6 @@
           <span>Total do Pedido</span>
           <span id="subtotal">R$ 0,00</span>
         </div>
-        <!-- Listener adicionado via addEventListener em main.js -->
         <button class="btn-checkout">Próximo Passo: Entrega</button>
       </div>
     </aside>
@@ -172,7 +214,6 @@
       <div class="modal-content" id="modal-content-area"></div>
     </div>
 
-    <!-- type="module" habilita ES6 imports/exports e aplica defer automático -->
     <script type="module" src="js/main.js"></script>
   </body>
 </html>

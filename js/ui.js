@@ -1,332 +1,342 @@
 // =============================================
-// ui.js — Renderização e manipulação do DOM
-// Regra: NÃO importa cart.js, admin.js ou main.js (evita dependência circular).
-// Toda lógica de negócio chega via callbacks.
+// ui.js - Renderizacao e manipulacao do DOM
 // =============================================
 
 import { LOGO_IMAGE } from "./config.js";
 import { categories, plateBuilder, getCategoryLabel } from "./data.js";
 import { formatCurrency, escapeHtml } from "./utils.js";
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
-
-export function showToast(msg) {
-    const container = document.getElementById("toast-container");
-    const toast = document.createElement("div");
-    toast.className = "toast";
-    toast.innerText = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
+export function showToast(message) {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerText = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
 }
 
-// ─── Modal ────────────────────────────────────────────────────────────────────
-
 export function openModal(htmlContent) {
-    document.getElementById("modal-content-area").innerHTML = htmlContent;
-    document.getElementById("modal-overlay").classList.remove("modal-hidden");
+  document.getElementById("modal-content-area").innerHTML = htmlContent;
+  document.getElementById("modal-overlay").classList.remove("modal-hidden");
 }
 
 export function closeModal() {
-    document.getElementById("modal-overlay").classList.add("modal-hidden");
+  document.getElementById("modal-overlay").classList.add("modal-hidden");
 }
 
-// ─── Carrinho lateral ─────────────────────────────────────────────────────────
-
 export function toggleCart() {
-    document.getElementById("side-cart").classList.toggle("active");
+  document.getElementById("side-cart").classList.toggle("active");
 }
 
 export function closeCart() {
-    document.getElementById("side-cart").classList.remove("active");
+  document.getElementById("side-cart").classList.remove("active");
 }
 
-// ─── Navegação entre páginas ──────────────────────────────────────────────────
-
 export function showMenuPage() {
-    document.getElementById("admin-page").classList.add("is-hidden");
-    document.getElementById("menu-page").classList.remove("is-hidden");
+  document.getElementById("menu-page").classList.remove("is-hidden");
+  document.getElementById("login-page").classList.add("is-hidden");
+  document.getElementById("admin-page").classList.add("is-hidden");
+}
+
+export function showLoginPage() {
+  document.getElementById("menu-page").classList.add("is-hidden");
+  document.getElementById("login-page").classList.remove("is-hidden");
+  document.getElementById("admin-page").classList.add("is-hidden");
 }
 
 export function showAdminPage() {
-    document.getElementById("menu-page").classList.add("is-hidden");
-    document.getElementById("admin-page").classList.remove("is-hidden");
+  document.getElementById("menu-page").classList.add("is-hidden");
+  document.getElementById("login-page").classList.add("is-hidden");
+  document.getElementById("admin-page").classList.remove("is-hidden");
 }
 
-// ─── Abas de categoria ────────────────────────────────────────────────────────
+export function setLoginError(message = "") {
+  const errorElement = document.getElementById("login-error");
+  errorElement.textContent = message;
+  errorElement.classList.toggle("is-hidden", !message);
+}
+
+export function clearLoginForm() {
+  document.getElementById("login-form").reset();
+  setLoginError("");
+}
 
 export function renderCategoryTabs(activeTab, onTabClick) {
-    const tabs = [...categories, { id: "monte-prato", label: "Monte o seu prato" }];
+  const tabs = [...categories, { id: "monte-prato", label: "Monte o seu prato" }];
 
-    document.getElementById("category-tabs").innerHTML = tabs
-        .map((tab) => `
-            <button class="category-tab ${activeTab === tab.id ? "active" : ""}" data-tab="${tab.id}">
-                ${escapeHtml(tab.label)}
-            </button>
-        `)
-        .join("");
+  document.getElementById("category-tabs").innerHTML = tabs
+    .map(
+      (tab) => `
+        <button class="category-tab ${activeTab === tab.id ? "active" : ""}" data-tab="${tab.id}">
+          ${escapeHtml(tab.label)}
+        </button>
+      `
+    )
+    .join("");
 
-    document.querySelectorAll(".category-tab").forEach((btn) => {
-        btn.addEventListener("click", () => onTabClick(btn.dataset.tab));
-    });
+  document.querySelectorAll(".category-tab").forEach((button) => {
+    button.addEventListener("click", () => onTabClick(button.dataset.tab));
+  });
 }
-
-// ─── Grade de produtos ────────────────────────────────────────────────────────
 
 export function renderProductGrid(products, onProductClick) {
-    const grid = document.getElementById("menu-grid");
+  const grid = document.getElementById("menu-grid");
 
-    if (!products.length) {
-        grid.innerHTML = `<div class="empty-state">Nenhum produto disponível nesta categoria.</div>`;
-        return;
-    }
+  if (!products.length) {
+    grid.innerHTML = `<div class="empty-state">Nenhum produto disponível nesta categoria.</div>`;
+    return;
+  }
 
-    grid.innerHTML = products
-        .map((p) => `
-            <article class="product-card" data-product-id="${p.id}">
-                <div class="product-info">
-                    <span class="category-pill">${escapeHtml(getCategoryLabel(p.category))}</span>
-                    <h3>${escapeHtml(p.name)}</h3>
-                    <p>${escapeHtml(p.desc)}</p>
-                    <span class="product-price">${formatCurrency(p.price)}</span>
-                </div>
-                <img
-                    src="${escapeHtml(p.image || LOGO_IMAGE)}"
-                    class="product-img"
-                    alt="${escapeHtml(p.name)}"
-                    onerror="this.src='${LOGO_IMAGE}'"
-                />
-            </article>
-        `)
-        .join("");
+  grid.innerHTML = products
+    .map(
+      (product) => `
+        <article class="product-card" data-product-id="${product.id}">
+          <div class="product-info">
+            <span class="category-pill">${escapeHtml(getCategoryLabel(product.category))}</span>
+            <h3>${escapeHtml(product.name)}</h3>
+            <p>${escapeHtml(product.desc)}</p>
+            <span class="product-price">${formatCurrency(product.price)}</span>
+          </div>
+          <img
+            src="${escapeHtml(product.image || LOGO_IMAGE)}"
+            class="product-img"
+            alt="${escapeHtml(product.name)}"
+            onerror="this.src='${LOGO_IMAGE}'"
+          />
+        </article>
+      `
+    )
+    .join("");
 
-    document.querySelectorAll(".product-card").forEach((card) => {
-        card.addEventListener("click", () => onProductClick(Number(card.dataset.productId)));
-    });
+  document.querySelectorAll(".product-card").forEach((card) => {
+    card.addEventListener("click", () => onProductClick(Number(card.dataset.productId)));
+  });
 }
 
-// ─── Construtor de prato ──────────────────────────────────────────────────────
-
 export function renderPlateBuilder(onAddPlate) {
-    document.getElementById("menu-grid").innerHTML = `
-        <section class="builder-panel">
-            <div class="builder-header">
-                <div>
-                    <span class="category-pill">Aba personalizada</span>
-                    <h3>Monte o seu prato</h3>
-                    <p>Escolha a combinação do almoço e adicione ao carrinho.</p>
-                </div>
-                <strong id="builder-price">${formatCurrency(plateBuilder.basePrice)}</strong>
-            </div>
+  document.getElementById("menu-grid").innerHTML = `
+    <section class="builder-panel">
+      <div class="builder-header">
+        <div>
+          <span class="category-pill">Aba personalizada</span>
+          <h3>Monte o seu prato</h3>
+          <p>Escolha a combinacao do almoco e adicione ao carrinho.</p>
+        </div>
+        <strong id="builder-price">${formatCurrency(plateBuilder.basePrice)}</strong>
+      </div>
 
-            <div class="builder-grid">
-                ${buildSelect("base",    "Arroz",      plateBuilder.options.base)}
-                ${buildSelect("beans",   "Feijão",     plateBuilder.options.beans)}
-                ${buildSelect("protein", "Proteína",   plateBuilder.options.protein)}
-                ${buildSelect("side",    "Guarnição",  plateBuilder.options.side)}
-                ${buildSelect("salad",   "Salada",     plateBuilder.options.salad)}
-                ${buildSelect("extra",   "Extra",      plateBuilder.options.extra)}
-            </div>
+      <div class="builder-grid">
+        ${buildSelect("base", "Arroz", plateBuilder.options.base)}
+        ${buildSelect("beans", "Feijao", plateBuilder.options.beans)}
+        ${buildSelect("protein", "Proteina", plateBuilder.options.protein)}
+        ${buildSelect("side", "Guarnicao", plateBuilder.options.side)}
+        ${buildSelect("salad", "Salada", plateBuilder.options.salad)}
+        ${buildSelect("extra", "Extra", plateBuilder.options.extra)}
+      </div>
 
-            <label>
-                Observação do prato
-                <textarea id="plate-note" class="input-field" rows="3" placeholder="Ex: molho separado, pouco sal..."></textarea>
-            </label>
+      <label>
+        Observacao do prato
+        <textarea id="plate-note" class="input-field" rows="3" placeholder="Ex: molho separado, pouco sal..."></textarea>
+      </label>
 
-            <button class="btn-primary" id="btn-add-plate">Adicionar prato personalizado</button>
-        </section>
-    `;
+      <button class="btn-primary" id="btn-add-plate">Adicionar prato personalizado</button>
+    </section>
+  `;
 
-    // Atualiza preço ao trocar seleção
-    document.querySelectorAll(".builder-grid select").forEach((sel) =>
-        sel.addEventListener("change", updateBuilderPrice)
-    );
+  document.querySelectorAll(".builder-grid select").forEach((select) => {
+    select.addEventListener("change", updateBuilderPrice);
+  });
 
-    document.getElementById("btn-add-plate").addEventListener("click", onAddPlate);
-    updateBuilderPrice();
+  document.getElementById("btn-add-plate").addEventListener("click", onAddPlate);
+  updateBuilderPrice();
 }
 
 function buildSelect(id, label, options) {
-    return `
-        <label>
-            ${label}
-            <select id="plate-${id}" class="input-field">
-                ${options.map((opt) => {
-                    const name = typeof opt === "string" ? opt : opt.name;
-                    const add  = typeof opt === "string" ? 0   : opt.add;
-                    const suffix = add > 0 ? ` (+${formatCurrency(add)})` : "";
-                    return `<option value="${escapeHtml(name)}" data-add="${add}">${escapeHtml(name + suffix)}</option>`;
-                }).join("")}
-            </select>
-        </label>
-    `;
+  return `
+    <label>
+      ${label}
+      <select id="plate-${id}" class="input-field">
+        ${options
+          .map((option) => {
+            const name = typeof option === "string" ? option : option.name;
+            const add = typeof option === "string" ? 0 : option.add;
+            const suffix = add > 0 ? ` (+${formatCurrency(add)})` : "";
+            return `<option value="${escapeHtml(name)}" data-add="${add}">${escapeHtml(name + suffix)}</option>`;
+          })
+          .join("")}
+      </select>
+    </label>
+  `;
 }
 
 function updateBuilderPrice() {
-    const price = getBuilderPrice();
-    const el = document.getElementById("builder-price");
-    if (el) el.innerText = formatCurrency(price);
+  const price = getBuilderPrice();
+  const element = document.getElementById("builder-price");
+  if (element) element.innerText = formatCurrency(price);
 }
 
 export function getBuilderPrice() {
-    return ["base", "beans", "protein", "side", "salad", "extra"].reduce((total, field) => {
-        const sel = document.getElementById(`plate-${field}`);
-        if (!sel) return total;
-        return total + Number(sel.options[sel.selectedIndex]?.dataset.add || 0);
-    }, plateBuilder.basePrice);
+  return ["base", "beans", "protein", "side", "salad", "extra"].reduce((total, field) => {
+    const select = document.getElementById(`plate-${field}`);
+    if (!select) return total;
+    return total + Number(select.options[select.selectedIndex]?.dataset.add || 0);
+  }, plateBuilder.basePrice);
 }
 
 export function getPlateSummary() {
-    const fields = [
-        ["Arroz",      "base"],
-        ["Feijão",     "beans"],
-        ["Proteína",   "protein"],
-        ["Guarnição",  "side"],
-        ["Salada",     "salad"],
-        ["Extra",      "extra"]
-    ];
-    const price = getBuilderPrice();
-    const desc  = fields.map(([label, id]) => `${label}: ${document.getElementById(`plate-${id}`)?.value ?? ""}`).join(" | ");
-    const note  = document.getElementById("plate-note")?.value.trim();
-    return { price, desc: note ? `${desc} | Obs: ${note}` : desc };
+  const fields = [
+    ["Arroz", "base"],
+    ["Feijao", "beans"],
+    ["Proteina", "protein"],
+    ["Guarnicao", "side"],
+    ["Salada", "salad"],
+    ["Extra", "extra"]
+  ];
+  const price = getBuilderPrice();
+  const desc = fields
+    .map(([label, id]) => `${label}: ${document.getElementById(`plate-${id}`)?.value ?? ""}`)
+    .join(" | ");
+  const note = document.getElementById("plate-note")?.value.trim();
+  return { price, desc: note ? `${desc} | Obs: ${note}` : desc };
 }
 
-// ─── Modal de quantidade ──────────────────────────────────────────────────────
-
 export function openQtyModal(product, onUpdateQty, onConfirm) {
-    openModal(`
-        <h2 class="modal-title">${escapeHtml(product.name)}</h2>
-        <p class="muted-text">Escolha a quantidade:</p>
-        <div class="qty-controls">
-            <button class="btn-circle" id="qty-minus">-</button>
-            <span id="temp-qty-display" class="qty-display">1</span>
-            <button class="btn-circle" id="qty-plus">+</button>
-        </div>
-        <button class="btn-primary" id="btn-confirm-cart">Adicionar ao Pedido</button>
-        <button class="btn-link"    id="btn-cancel-qty">Cancelar</button>
-    `);
+  openModal(`
+    <h2 class="modal-title">${escapeHtml(product.name)}</h2>
+    <p class="muted-text">Escolha a quantidade:</p>
+    <div class="qty-controls">
+      <button class="btn-circle" id="qty-minus">-</button>
+      <span id="temp-qty-display" class="qty-display">1</span>
+      <button class="btn-circle" id="qty-plus">+</button>
+    </div>
+    <button class="btn-primary" id="btn-confirm-cart">Adicionar ao pedido</button>
+    <button class="btn-link" id="btn-cancel-qty">Cancelar</button>
+  `);
 
-    document.getElementById("qty-minus").addEventListener("click", () => onUpdateQty(-1));
-    document.getElementById("qty-plus").addEventListener("click",  () => onUpdateQty(1));
-    document.getElementById("btn-confirm-cart").addEventListener("click", onConfirm);
-    document.getElementById("btn-cancel-qty").addEventListener("click", closeModal);
+  document.getElementById("qty-minus").addEventListener("click", () => onUpdateQty(-1));
+  document.getElementById("qty-plus").addEventListener("click", () => onUpdateQty(1));
+  document.getElementById("btn-confirm-cart").addEventListener("click", onConfirm);
+  document.getElementById("btn-cancel-qty").addEventListener("click", closeModal);
 }
 
 export function updateQtyDisplay(qty) {
-    const el = document.getElementById("temp-qty-display");
-    if (el) el.innerText = qty;
+  const element = document.getElementById("temp-qty-display");
+  if (element) element.innerText = qty;
 }
-
-// ─── Modal de entrega ─────────────────────────────────────────────────────────
 
 export function openAddressModal(onFinish) {
-    openModal(`
-        <h3 class="modal-title">Dados de Entrega</h3>
-        <p class="muted-text">Quase lá! Precisamos saber quem recebe.</p>
+  openModal(`
+    <h3 class="modal-title">Dados de entrega</h3>
+    <p class="muted-text">Quase la! Precisamos saber quem recebe.</p>
 
-        <input type="text" id="client-name"    placeholder="Nome completo"                            class="input-field" />
-        <input type="text" id="client-address" placeholder="Endereço completo (Rua, Nº, Bairro)"     class="input-field" />
+    <input type="text" id="client-name" placeholder="Nome completo" class="input-field" />
+    <input type="text" id="client-address" placeholder="Endereco completo (Rua, N°, Bairro)" class="input-field" />
 
-        <label>
-            Forma de pagamento
-            <select id="payment-method" class="input-field">
-                <option value="">Selecione</option>
-                <option value="Pix">Pix</option>
-                <option value="Crédito">Crédito</option>
-                <option value="Débito">Débito</option>
-            </select>
-        </label>
+    <label>
+      Forma de pagamento
+      <select id="payment-method" class="input-field">
+        <option value="">Selecione</option>
+        <option value="Pix">Pix</option>
+        <option value="Credito">Credito</option>
+        <option value="Debito">Debito</option>
+      </select>
+    </label>
 
-        <label>
-            Observações do cliente
-            <textarea id="client-notes" class="input-field" rows="3"
-                placeholder="Ex: não quero salada, entregar sem tocar campainha..."></textarea>
-        </label>
+    <label>
+      Observacoes do cliente
+      <textarea id="client-notes" class="input-field" rows="3"
+        placeholder="Ex: nao quero salada, entregar sem tocar campainha..."></textarea>
+    </label>
 
-        <button class="btn-primary" id="btn-finish-order">Finalizar no WhatsApp</button>
-        <button class="btn-link"    id="btn-cancel-order">Voltar</button>
-    `);
+    <button class="btn-primary" id="btn-finish-order">Finalizar no WhatsApp</button>
+    <button class="btn-link" id="btn-cancel-order">Voltar</button>
+  `);
 
-    document.getElementById("btn-finish-order").addEventListener("click", onFinish);
-    document.getElementById("btn-cancel-order").addEventListener("click", closeModal);
+  document.getElementById("btn-finish-order").addEventListener("click", onFinish);
+  document.getElementById("btn-cancel-order").addEventListener("click", closeModal);
 }
-
-// ─── Carrinho — renderização ──────────────────────────────────────────────────
 
 export function renderCartUI(cart, total, count, onChangeQty, onRemove) {
-    document.getElementById("cart-counter").innerText = count;
-    document.getElementById("subtotal").innerText     = formatCurrency(total);
+  document.getElementById("cart-counter").innerText = count;
+  document.getElementById("subtotal").innerText = formatCurrency(total);
 
-    const list = document.getElementById("cart-items");
+  const list = document.getElementById("cart-items");
 
-    if (!cart.length) {
-        list.innerHTML = `<div class="empty-state">Seu carrinho está vazio.</div>`;
-        return;
-    }
+  if (!cart.length) {
+    list.innerHTML = `<div class="empty-state">Seu carrinho esta vazio.</div>`;
+    return;
+  }
 
-    list.innerHTML = cart.map((item) => `
+  list.innerHTML = cart
+    .map(
+      (item) => `
         <article class="cart-item">
-            <div class="cart-item-info">
-                <h4>${escapeHtml(item.name)}</h4>
-                <p>${escapeHtml(item.desc)}</p>
-                <strong>${formatCurrency(item.price * item.qty)}</strong>
-            </div>
-            <div class="cart-quantity">
-                <button data-action="minus" data-id="${item.cartId}" aria-label="Diminuir">-</button>
-                <span>${item.qty}</span>
-                <button data-action="plus"  data-id="${item.cartId}" aria-label="Aumentar">+</button>
-            </div>
-            <button class="remove-item" data-remove="${item.cartId}">Remover</button>
+          <div class="cart-item-info">
+            <h4>${escapeHtml(item.name)}</h4>
+            <p>${escapeHtml(item.desc)}</p>
+            <strong>${formatCurrency(item.price * item.qty)}</strong>
+          </div>
+          <div class="cart-quantity">
+            <button data-action="minus" data-id="${item.cartId}" aria-label="Diminuir">-</button>
+            <span>${item.qty}</span>
+            <button data-action="plus" data-id="${item.cartId}" aria-label="Aumentar">+</button>
+          </div>
+          <button class="remove-item" data-remove="${item.cartId}">Remover</button>
         </article>
-    `).join("");
+      `
+    )
+    .join("");
 
-    list.querySelectorAll("[data-action='minus']").forEach((btn) =>
-        btn.addEventListener("click", () => onChangeQty(btn.dataset.id, -1))
-    );
-    list.querySelectorAll("[data-action='plus']").forEach((btn) =>
-        btn.addEventListener("click", () => onChangeQty(btn.dataset.id, 1))
-    );
-    list.querySelectorAll("[data-remove]").forEach((btn) =>
-        btn.addEventListener("click", () => onRemove(btn.dataset.remove))
-    );
+  list.querySelectorAll("[data-action='minus']").forEach((button) => {
+    button.addEventListener("click", () => onChangeQty(button.dataset.id, -1));
+  });
+  list.querySelectorAll("[data-action='plus']").forEach((button) => {
+    button.addEventListener("click", () => onChangeQty(button.dataset.id, 1));
+  });
+  list.querySelectorAll("[data-remove]").forEach((button) => {
+    button.addEventListener("click", () => onRemove(button.dataset.remove));
+  });
 }
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
-
 export function renderCategoryOptions() {
-    document.getElementById("product-category").innerHTML = categories
-        .map((c) => `<option value="${c.id}">${escapeHtml(c.label)}</option>`)
-        .join("");
+  document.getElementById("product-category").innerHTML = categories
+    .map((category) => `<option value="${category.id}">${escapeHtml(category.label)}</option>`)
+    .join("");
 }
 
 export function renderAdminList(products, onEdit, onDelete) {
-    const list = document.getElementById("admin-product-list");
+  const list = document.getElementById("admin-product-list");
 
-    if (!products.length) {
-        list.innerHTML = `<div class="empty-state">Nenhum produto cadastrado.</div>`;
-        return;
-    }
+  if (!products.length) {
+    list.innerHTML = `<div class="empty-state">Nenhum produto cadastrado.</div>`;
+    return;
+  }
 
-    list.innerHTML = products.map((p) => `
+  list.innerHTML = products
+    .map(
+      (product) => `
         <article class="admin-product">
-            <img src="${escapeHtml(p.image || LOGO_IMAGE)}" alt="${escapeHtml(p.name)}" onerror="this.src='${LOGO_IMAGE}'" />
-            <div>
-                <span class="category-pill">${escapeHtml(getCategoryLabel(p.category))}</span>
-                <h3>${escapeHtml(p.name)}</h3>
-                <p>${escapeHtml(p.desc)}</p>
-                <strong>${formatCurrency(p.price)}</strong>
-                <small>${p.available === false ? "Indisponível" : "Disponível"}</small>
-            </div>
-            <div class="admin-product-actions">
-                <button class="btn-secondary btn-edit"   data-id="${p.id}">Editar</button>
-                <button class="btn-danger   btn-delete"  data-id="${p.id}">Excluir</button>
-            </div>
+          <img src="${escapeHtml(product.image || LOGO_IMAGE)}" alt="${escapeHtml(product.name)}" onerror="this.src='${LOGO_IMAGE}'" />
+          <div>
+            <span class="category-pill">${escapeHtml(getCategoryLabel(product.category))}</span>
+            <h3>${escapeHtml(product.name)}</h3>
+            <p>${escapeHtml(product.desc)}</p>
+            <strong>${formatCurrency(product.price)}</strong>
+            <small>${product.available === false ? "Indisponivel" : "Disponivel"}</small>
+          </div>
+          <div class="admin-product-actions">
+            <button class="btn-secondary btn-edit" data-id="${product.id}">Editar</button>
+            <button class="btn-danger btn-delete" data-id="${product.id}">Excluir</button>
+          </div>
         </article>
-    `).join("");
+      `
+    )
+    .join("");
 
-    list.querySelectorAll(".btn-edit").forEach((btn) =>
-        btn.addEventListener("click", () => onEdit(Number(btn.dataset.id)))
-    );
-    list.querySelectorAll(".btn-delete").forEach((btn) =>
-        btn.addEventListener("click", () => onDelete(Number(btn.dataset.id)))
-    );
+  list.querySelectorAll(".btn-edit").forEach((button) => {
+    button.addEventListener("click", () => onEdit(Number(button.dataset.id)));
+  });
+  list.querySelectorAll(".btn-delete").forEach((button) => {
+    button.addEventListener("click", () => onDelete(Number(button.dataset.id)));
+  });
 }

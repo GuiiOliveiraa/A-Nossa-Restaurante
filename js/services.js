@@ -1,31 +1,78 @@
 // =============================================
-// services.js — Camada de armazenamento (localStorage)
+// services.js - Camada de comunicacao com a API
 // =============================================
 
-import { PRODUCTS_STORAGE_KEY } from "./config.js";
-import { defaultProducts } from "./data.js";
+import { LOGO_IMAGE } from "./config.js";
 
-/**
- * Carrega os produtos do localStorage.
- * Retorna os produtos padrão se não houver dados salvos ou se forem inválidos.
- * @returns {Array}
- */
-export function loadProducts() {
-    const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-    if (!saved) return [...defaultProducts];
+async function request(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    },
+    ...options
+  });
 
-    try {
-        const parsed = JSON.parse(saved);
-        return Array.isArray(parsed) && parsed.length ? parsed : [...defaultProducts];
-    } catch {
-        return [...defaultProducts];
-    }
+  if (response.status === 204) {
+    return null;
+  }
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const error = new Error(data?.message || "Falha na requisicao.");
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
 }
 
-/**
- * Persiste o array de produtos no localStorage.
- * @param {Array} products
- */
-export function persistProducts(products) {
-    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+function normalizeProduct(product) {
+  return {
+    ...product,
+    image: String(product.image || "").trim() || LOGO_IMAGE,
+    available: product.available !== false
+  };
+}
+
+export async function loadProducts() {
+  const products = await request("/api/products", { method: "GET" });
+  return Array.isArray(products) ? products.map(normalizeProduct) : [];
+}
+
+export async function createProduct(product) {
+  const created = await request("/api/products", {
+    method: "POST",
+    body: JSON.stringify(product)
+  });
+  return normalizeProduct(created);
+}
+
+export async function updateProduct(id, product) {
+  const updated = await request(`/api/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(product)
+  });
+  return normalizeProduct(updated);
+}
+
+export async function deleteProductById(id) {
+  await request(`/api/products/${id}`, { method: "DELETE" });
+}
+
+export async function login(identifier, password) {
+  return request("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ identifier, password })
+  });
+}
+
+export async function logout() {
+  await request("/api/auth/logout", { method: "POST" });
+}
+
+export async function getCurrentUser() {
+  return request("/api/auth/me", { method: "GET" });
 }

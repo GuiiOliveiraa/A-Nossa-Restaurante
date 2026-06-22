@@ -1,104 +1,112 @@
 // =============================================
-// admin.js — Painel administrativo (CRUD de produtos)
+// admin.js - Painel administrativo (CRUD de produtos)
 // =============================================
 
 import { LOGO_IMAGE } from "./config.js";
-import { persistProducts } from "./services.js";
+import { createProduct, deleteProductById, updateProduct } from "./services.js";
 import { showToast, renderCategoryOptions, renderAdminList } from "./ui.js";
 import { syncCartWithProduct, removeCartItemsByProduct } from "./cart.js";
 
-// ─── Estado ───────────────────────────────────────────────────────────────────
+let products = [];
+let onProductChange = null;
 
-let _products        = [];
-let _onProductChange = null; // callback(updatedProducts) → chamado após cada mutação
-
-// ─── Inicialização ────────────────────────────────────────────────────────────
-
-/**
- * @param {Array}    initialProducts
- * @param {Function} onChangeCallback  Chamado com o array atualizado a cada mutação
- */
 export function initAdmin(initialProducts, onChangeCallback) {
-    _products        = initialProducts;
-    _onProductChange = onChangeCallback;
+  products = initialProducts;
+  onProductChange = onChangeCallback;
 }
 
-export function getProducts()       { return _products; }
-export function setProducts(list)   { _products = list; }
+export function getProducts() {
+  return products;
+}
 
-// ─── Render ───────────────────────────────────────────────────────────────────
+export function setProducts(list) {
+  products = list;
+}
 
 export function renderAdminPage() {
-    renderCategoryOptions();
-    renderAdminList(_products, editProduct, deleteProduct);
+  renderCategoryOptions();
+  renderAdminList(products, editProduct, deleteProduct);
 }
 
-// ─── CRUD ─────────────────────────────────────────────────────────────────────
+function readProductForm() {
+  const idField = document.getElementById("product-id");
+  const id = idField.value ? Number(idField.value) : null;
 
-export function saveProduct(event) {
-    event.preventDefault();
+  return {
+    id,
+    name: document.getElementById("product-name").value.trim(),
+    desc: document.getElementById("product-desc").value.trim(),
+    price: Number(document.getElementById("product-price").value),
+    category: document.getElementById("product-category").value,
+    image: document.getElementById("product-image").value.trim() || LOGO_IMAGE,
+    available: document.getElementById("product-available").checked
+  };
+}
 
-    const idField = document.getElementById("product-id");
-    const id      = idField.value ? Number(idField.value) : Date.now();
+export async function saveProduct(event) {
+  event.preventDefault();
 
-    const product = {
-        id,
-        name:      document.getElementById("product-name").value.trim(),
-        desc:      document.getElementById("product-desc").value.trim(),
-        price:     Number(document.getElementById("product-price").value),
-        category:  document.getElementById("product-category").value,
-        image:     document.getElementById("product-image").value.trim() || LOGO_IMAGE,
-        available: document.getElementById("product-available").checked
-    };
+  const product = readProductForm();
 
-    if (!product.name || !product.desc || Number.isNaN(product.price)) {
-        return showToast("Preencha os dados do produto corretamente.");
-    }
+  if (!product.name || !product.desc || Number.isNaN(product.price)) {
+    showToast("Preencha os dados do produto corretamente.");
+    return false;
+  }
 
-    const idx = _products.findIndex((p) => p.id === id);
-    if (idx >= 0) {
-        _products[idx] = product;
-        syncCartWithProduct(product);
-        showToast("Produto atualizado!");
+  try {
+    if (product.id) {
+      const updated = await updateProduct(product.id, product);
+      products = products.map((item) => (item.id === updated.id ? updated : item));
+      syncCartWithProduct(updated);
+      showToast("Produto atualizado!");
     } else {
-        _products.push(product);
-        showToast("Produto cadastrado!");
+      const created = await createProduct(product);
+      products = [...products, created];
+      showToast("Produto cadastrado!");
     }
 
-    persistProducts(_products);
     resetProductForm();
-    renderAdminList(_products, editProduct, deleteProduct);
-    _onProductChange?.([..._products]);
+    renderAdminList(products, editProduct, deleteProduct);
+    onProductChange?.([...products]);
+    return true;
+  } catch (error) {
+    showToast(error.message || "Nao foi possivel salvar o produto.");
+    return false;
+  }
 }
 
 export function editProduct(id) {
-    const p = _products.find((p) => p.id === id);
-    if (!p) return;
+  const product = products.find((item) => item.id === id);
+  if (!product) return;
 
-    document.getElementById("product-id").value       = p.id;
-    document.getElementById("product-name").value     = p.name;
-    document.getElementById("product-desc").value     = p.desc;
-    document.getElementById("product-price").value    = p.price;
-    document.getElementById("product-category").value = p.category;
-    document.getElementById("product-image").value    = p.image || "";
-    document.getElementById("product-available").checked = p.available !== false;
+  document.getElementById("product-id").value = product.id;
+  document.getElementById("product-name").value = product.name;
+  document.getElementById("product-desc").value = product.desc;
+  document.getElementById("product-price").value = product.price;
+  document.getElementById("product-category").value = product.category;
+  document.getElementById("product-image").value = product.image || "";
+  document.getElementById("product-available").checked = product.available !== false;
 }
 
-export function deleteProduct(id) {
-    const p = _products.find((p) => p.id === id);
-    if (!p || !confirm(`Excluir "${p.name}"?`)) return;
+export async function deleteProduct(id) {
+  const product = products.find((item) => item.id === id);
+  if (!product || !window.confirm(`Excluir "${product.name}"?`)) return;
 
-    _products = _products.filter((p) => p.id !== id);
+  try {
+    await deleteProductById(id);
+    products = products.filter((item) => item.id !== id);
     removeCartItemsByProduct(id);
-    persistProducts(_products);
     resetProductForm();
-    renderAdminList(_products, editProduct, deleteProduct);
-    _onProductChange?.([..._products]);
+    renderAdminList(products, editProduct, deleteProduct);
+    onProductChange?.([...products]);
     showToast("Produto removido!");
+  } catch (error) {
+    showToast(error.message || "Nao foi possivel remover o produto.");
+  }
 }
 
 export function resetProductForm() {
-    document.getElementById("product-form").reset();
-    document.getElementById("product-id").value = "";
-    document.getElementById("product-available").checked = true;
+  document.getElementById("product-form").reset();
+  document.getElementById("product-id").value = "";
+  document.getElementById("product-available").checked = true;
 }
