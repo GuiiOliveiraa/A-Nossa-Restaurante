@@ -1,4 +1,3 @@
-const fs = require("fs");
 const path = require("path");
 
 const bcrypt = require("bcryptjs");
@@ -7,33 +6,33 @@ const dotenv = require("dotenv");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 
+const { getClient, getProductsCollection, MONGODB_DB_NAME } = require("./lib/mongo");
+
 dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const JWT_SECRET = process.env.JWT_SECRET || "troque-esta-chave-em-producao";
+const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_COOKIE = "a_nossa_admin_token";
-const PRODUCTS_FILE = path.join(__dirname, "data", "products.json");
-
-const adminUser = {
-  id: 1,
-  name: process.env.ADMIN_NAME || "Administrador",
-  email: (process.env.ADMIN_EMAIL || "admin@anossa.com").toLowerCase(),
-  passwordHash: bcrypt.hashSync(process.env.ADMIN_PASSWORD || "admin123", 10)
-};
+const ADMIN_NAME = process.env.ADMIN_NAME || "Administrador";
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(__dirname));
 
-function readProducts() {
-  const raw = fs.readFileSync(PRODUCTS_FILE, "utf-8");
-  const parsed = JSON.parse(raw);
-  return Array.isArray(parsed) ? parsed : [];
+function hasRequiredEnv() {
+  return Boolean(process.env.MONGODB_URI && JWT_SECRET && ADMIN_EMAIL && ADMIN_PASSWORD);
 }
 
-function writeProducts(products) {
-  fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+function getAdminUser() {
+  return {
+    id: 1,
+    name: ADMIN_NAME,
+    email: ADMIN_EMAIL,
+    passwordHash: bcrypt.hashSync(ADMIN_PASSWORD, 10)
+  };
 }
 
 function sanitizeUser(user) {
@@ -102,7 +101,55 @@ function validateProduct(product) {
   return null;
 }
 
+function normalizeProduct(product) {
+  return {
+    id: Number(product.id),
+    name: String(product.name || "").trim(),
+    desc: String(product.desc || "").trim(),
+    price: Number(product.price),
+    category: String(product.category || "").trim(),
+    image: String(product.image || "Logo.PNG").trim() || "Logo.PNG",
+    available: product.available !== false
+  };
+}
+
+app.get("/api/health", async (_req, res) => {
+  const env = {
+    MONGODB_URI: Boolean(process.env.MONGODB_URI),
+    MONGODB_DB_NAME: Boolean(process.env.MONGODB_DB_NAME || "anossa_db"),
+    JWT_SECRET: Boolean(process.env.JWT_SECRET),
+    ADMIN_EMAIL: Boolean(process.env.ADMIN_EMAIL),
+    ADMIN_PASSWORD: Boolean(process.env.ADMIN_PASSWORD)
+  };
+
+  try {
+    await (await getClient()).db(MONGODB_DB_NAME).command({ ping: 1 });
+    return res.json({
+      ok: env.MONGODB_URI && env.JWT_SECRET && env.ADMIN_EMAIL && env.ADMIN_PASSWORD,
+      mongodb: true,
+      databaseName: MONGODB_DB_NAME,
+      env
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      mongodb: false,
+      databaseName: MONGODB_DB_NAME,
+      env,
+      mongodbError: error.message || "Falha ao conectar no MongoDB."
+    });
+  }
+});
+
 app.post("/api/auth/login", async (req, res) => {
+  if (!hasRequiredEnv()) {
+    return res.status(500).json({
+      message:
+        "Variaveis de ambiente ausentes. Configure MONGODB_URI, JWT_SECRET, ADMIN_EMAIL e ADMIN_PASSWORD."
+    });
+  }
+
+  const adminUser = getAdminUser();
   const identifier = String(req.body?.identifier || "").trim().toLowerCase();
   const password = String(req.body?.password || "");
 
@@ -140,14 +187,20 @@ app.post("/api/auth/logout", (req, res) => {
 });
 
 app.get("/api/auth/me", requireApiAuth, (req, res) => {
-  return res.json({ user: sanitizeUser(adminUser) });
+  return res.json({ user: sanitizeUser(getAdminUser()) });
 });
 
-app.get("/api/products", (_req, res) => {
-  return res.json(readProducts());
+app.get("/api/products", async (_req, res) => {
+  try {
+    const productsCollection = await getProductsCollection();
+    const products = await productsCollection.find({}).toArray();
+    return res.json(products.map(normalizeProduct));
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Erro interno." });
+  }
 });
 
-app.post("/api/products", requireApiAuth, (req, res) => {
+app.post("/api/products", requireApiAuth, async (req, res) => {
   const incoming = req.body || {};
   const validationError = validateProduct(incoming);
 
@@ -155,23 +208,26 @@ app.post("/api/products", requireApiAuth, (req, res) => {
     return res.status(400).json({ message: validationError });
   }
 
-  const products = readProducts();
-  const product = {
-    id: Date.now(),
-    name: String(incoming.name).trim(),
-    desc: String(incoming.desc).trim(),
-    price: Number(incoming.price),
-    category: String(incoming.category).trim(),
-    image: String(incoming.image || "Logo.PNG").trim() || "Logo.PNG",
-    available: Boolean(incoming.available)
-  };
+  try {
+    const productsCollection = await getProductsCollection();
+    const product = normalizeProduct({
+      id: Date.now(),
+      name: incoming.name,
+      desc: incoming.desc,
+      price: incoming.price,
+      category: incoming.category,
+      image: incoming.image,
+      available: incoming.available
+    });
 
-  products.push(product);
-  writeProducts(products);
-  return res.status(201).json(product);
+    await productsCollection.insertOne(product);
+    return res.status(201).json(product);
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Erro interno." });
+  }
 });
 
-app.put("/api/products/:id", requireApiAuth, (req, res) => {
+app.put("/api/products/:id", requireApiAuth, async (req, res) => {
   const productId = Number(req.params.id);
   const incoming = req.body || {};
   const validationError = validateProduct(incoming);
@@ -184,39 +240,48 @@ app.put("/api/products/:id", requireApiAuth, (req, res) => {
     return res.status(400).json({ message: validationError });
   }
 
-  const products = readProducts();
-  const index = products.findIndex((product) => product.id === productId);
+  try {
+    const productsCollection = await getProductsCollection();
+    const product = normalizeProduct({
+      id: productId,
+      name: incoming.name,
+      desc: incoming.desc,
+      price: incoming.price,
+      category: incoming.category,
+      image: incoming.image,
+      available: incoming.available
+    });
 
-  if (index < 0) {
-    return res.status(404).json({ message: "Produto nao encontrado." });
+    const result = await productsCollection.updateOne(
+      { id: productId },
+      { $set: product }
+    );
+
+    if (!result.matchedCount) {
+      return res.status(404).json({ message: "Produto nao encontrado." });
+    }
+
+    return res.json(product);
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Erro interno." });
   }
-
-  products[index] = {
-    ...products[index],
-    name: String(incoming.name).trim(),
-    desc: String(incoming.desc).trim(),
-    price: Number(incoming.price),
-    category: String(incoming.category).trim(),
-    image: String(incoming.image || "Logo.PNG").trim() || "Logo.PNG",
-    available: Boolean(incoming.available)
-  };
-
-  writeProducts(products);
-  return res.json(products[index]);
 });
 
-app.delete("/api/products/:id", requireApiAuth, (req, res) => {
+app.delete("/api/products/:id", requireApiAuth, async (req, res) => {
   const productId = Number(req.params.id);
-  const products = readProducts();
-  const index = products.findIndex((product) => product.id === productId);
 
-  if (index < 0) {
-    return res.status(404).json({ message: "Produto nao encontrado." });
+  try {
+    const productsCollection = await getProductsCollection();
+    const result = await productsCollection.deleteOne({ id: productId });
+
+    if (!result.deletedCount) {
+      return res.status(404).json({ message: "Produto nao encontrado." });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Erro interno." });
   }
-
-  products.splice(index, 1);
-  writeProducts(products);
-  return res.status(204).send();
 });
 
 app.get("/login", (_req, res) => {

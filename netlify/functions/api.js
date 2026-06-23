@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { MongoClient } = require("mongodb");
+const { getClient, getDb, getProductsCollection, MONGODB_DB_NAME } = require("../../lib/mongo");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_COOKIE = "a_nossa_admin_token";
@@ -8,35 +8,6 @@ const ADMIN_NAME = process.env.ADMIN_NAME || "Administrador";
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const MONGODB_URI = process.env.MONGODB_URI;
-
-let client;
-let clientPromise;
-
-if (MONGODB_URI) {
-  client = new MongoClient(MONGODB_URI);
-}
-
-function getClient() {
-  if (!client) {
-    throw new Error("Variavel MONGODB_URI nao configurada.");
-  }
-
-  if (!clientPromise) {
-    clientPromise = client.connect();
-  }
-
-  return clientPromise;
-}
-
-async function getDb() {
-  const connectedClient = await getClient();
-  return connectedClient.db("anossa_db");
-}
-
-async function getProductsCollection() {
-  const db = await getDb();
-  return db.collection("products");
-}
 
 function parseCookies(event) {
   const header = event.headers.cookie || event.headers.Cookie || "";
@@ -119,6 +90,7 @@ function normalizeProduct(product) {
 function getEnvStatus() {
   return {
     MONGODB_URI: Boolean(process.env.MONGODB_URI),
+    MONGODB_DB_NAME: Boolean(process.env.MONGODB_DB_NAME || "anossa_db"),
     JWT_SECRET: Boolean(process.env.JWT_SECRET),
     ADMIN_EMAIL: Boolean(process.env.ADMIN_EMAIL),
     ADMIN_PASSWORD: Boolean(process.env.ADMIN_PASSWORD)
@@ -142,8 +114,7 @@ exports.handler = async (event) => {
 
       if (env.MONGODB_URI) {
         try {
-          const db = await getDb();
-          await db.command({ ping: 1 });
+          await (await getClient()).db(MONGODB_DB_NAME).command({ ping: 1 });
           mongodb = true;
         } catch (error) {
           mongodbError = error.message || "Falha ao conectar no MongoDB.";
@@ -153,6 +124,7 @@ exports.handler = async (event) => {
       return json(200, {
         ok: mongodb && env.JWT_SECRET && env.ADMIN_EMAIL && env.ADMIN_PASSWORD,
         mongodb,
+        databaseName: MONGODB_DB_NAME,
         env,
         ...(mongodbError ? { mongodbError } : {})
       });

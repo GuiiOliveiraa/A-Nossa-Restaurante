@@ -1,14 +1,14 @@
 # A Nossa Restaurante
 
-Sistema de cardápio digital com carrinho, checkout via WhatsApp e área administrativa protegida.
+Sistema de cardapio digital com carrinho, checkout via WhatsApp e area administrativa protegida.
 
 ## Funcionalidades
 
-- Cardápio online por categorias
-- Carrinho com quantidade, remoção e total
+- Cardapio online por categorias
+- Carrinho com quantidade, remocao e total
 - Montagem de prato personalizado
 - Login administrativo com JWT em cookie
-- CRUD de produtos via Netlify Functions
+- CRUD de produtos
 - Modo noturno
 - Modo alto contraste amarelo e preto
 - Deploy pronto para Netlify
@@ -19,46 +19,41 @@ Sistema de cardápio digital com carrinho, checkout via WhatsApp e área adminis
 - CSS3
 - JavaScript modular
 - Node.js
+- Express
 - Netlify Functions
 - MongoDB Atlas
 - JWT
 - bcryptjs
 
-## Como conectar o MongoDB Atlas
+## O que mudou
 
-1. Crie uma conta em https://www.mongodb.com/atlas
-2. Crie um cluster gratuito ou pago.
-3. Crie um usuário de banco de dados.
-4. Em `Network Access`, libere o IP que vai acessar o banco.
-5. Copie a connection string em `Connect > Drivers`.
-6. No projeto, configure a variável `MONGODB_URI` com essa string.
+O projeto agora usa o mesmo banco MongoDB Atlas nos dois ambientes:
 
-Exemplo:
+- `server.js` usa MongoDB no desenvolvimento local
+- `netlify/functions/api.js` usa MongoDB no deploy do Netlify
+- os dois compartilham a mesma configuracao de conexao
 
-```env
-MONGODB_URI=mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
-```
+Isso elimina a divergencia antiga entre `data/products.json` no local e MongoDB em producao.
 
-No Netlify, essa variável deve ser cadastrada em:
-
-- `Site settings`
-- `Environment variables`
-
-## Variáveis de ambiente
+## Variaveis de ambiente
 
 Crie um arquivo `.env` com base em `.env.example`.
 
-### Variáveis obrigatórias
+### Obrigatorias
 
 - `MONGODB_URI`
 - `JWT_SECRET`
-- `ADMIN_NAME`
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
 
-### Variáveis opcionais
+### Opcionais
 
 - `PORT`
+- `ADMIN_NAME`
+- `MONGODB_DB_NAME`
+
+Se `ADMIN_NAME` nao for definida, o sistema usa `Administrador`.
+Se `MONGODB_DB_NAME` nao for definida, o sistema usa `anossa_db`.
 
 ## Exemplo de `.env`
 
@@ -69,25 +64,37 @@ ADMIN_NAME=Administrador
 ADMIN_EMAIL=admin@anossa.com
 ADMIN_PASSWORD=coloque-uma-senha-forte-aqui
 MONGODB_URI=mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DB_NAME=anossa_db
 ```
 
-## Como rodar localmente
+## Como conectar o MongoDB Atlas
 
-1. Instale as dependências:
+1. Crie uma conta em https://www.mongodb.com/atlas
+2. Crie um cluster.
+3. Crie um usuario de banco.
+4. Em `Network Access`, libere o IP do seu computador para testes locais.
+5. Para o Netlify, libere `0.0.0.0/0`, porque os IPs das Functions sao dinamicos.
+6. Copie a string em `Connect > Drivers > Node.js`.
+7. Se a senha tiver caracteres especiais como `@`, `#` ou `/`, use URL encode ou gere uma senha sem esses caracteres.
+8. Configure `MONGODB_URI` no `.env` local e no painel do Netlify.
+
+## Desenvolvimento local
+
+1. Instale as dependencias:
 
 ```bash
 npm install
 ```
 
-2. Crie o `.env`:
+2. Crie o arquivo `.env`:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-3. Preencha o `.env` com sua string do MongoDB Atlas e suas credenciais.
+3. Preencha o `.env` com a conexao do Atlas e as credenciais administrativas.
 
-4. Inicie o servidor:
+4. Inicie o projeto:
 
 ```bash
 npm run dev
@@ -99,31 +106,60 @@ npm run dev
 http://localhost:3000
 ```
 
-## Como publicar no Netlify
+## Deploy no Netlify
 
-1. Conecte o repositório no Netlify.
-2. Configure as variáveis de ambiente no painel do Netlify.
-3. Confirme:
+1. Faça push do repositorio.
+2. Conecte o projeto no Netlify.
+3. Em `Site settings > Environment variables`, configure:
 
 - `MONGODB_URI`
 - `JWT_SECRET`
-- `ADMIN_NAME`
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
+- `ADMIN_NAME` se quiser personalizar
+- `MONGODB_DB_NAME` se quiser usar outro banco
 
-4. O arquivo [`netlify.toml`](./netlify.toml) já está configurado para:
+4. Dispare o deploy.
 
-- publicar a raiz do projeto
-- redirecionar rotas SPA para `index.html`
-- expor a Function em `/api/*`
+## Diagnostico
+
+O projeto possui health check nos dois ambientes:
+
+- `GET /api/health` no `server.js`
+- `GET /api/health` no Netlify Function
+
+Resposta esperada:
+
+```json
+{
+  "ok": true,
+  "mongodb": true,
+  "databaseName": "anossa_db",
+  "env": {
+    "MONGODB_URI": true,
+    "MONGODB_DB_NAME": true,
+    "JWT_SECRET": true,
+    "ADMIN_EMAIL": true,
+    "ADMIN_PASSWORD": true
+  }
+}
+```
+
+Se `mongodb` vier `false`, verifique:
+
+- `MONGODB_URI`
+- senha do usuario do Atlas
+- `Network Access`
+- nome do banco configurado
 
 ## Estrutura da API
 
-### Autenticação
+### Autenticacao
 
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
+- `GET /api/health`
 
 ### Produtos
 
@@ -132,42 +168,13 @@ http://localhost:3000
 - `PUT /api/products/:id`
 - `DELETE /api/products/:id`
 
-## Observações sobre segurança
+## Seguranca
 
-- Senhas e segredo JWT devem ficar somente no `.env`
-- Nunca commite `.env` no repositório
-- Use uma `JWT_SECRET` longa e aleatória
-- Use um usuário de banco com permissões limitadas, se possível
+- Nunca commite `.env`
+- Guarde `JWT_SECRET` somente no ambiente local e no painel do Netlify
+- Use senha forte no MongoDB Atlas
+- Prefira usuario de banco com permissao limitada
 
-## Acesso administrativo
+## Compatibilidade do frontend
 
-As credenciais administrativas são definidas nas variáveis:
-
-- `ADMIN_NAME`
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD`
-
-O login usa essas credenciais e cria um cookie `httpOnly` com JWT.
-
-## Recuperação de produtos antigos
-
-Se você já tinha produtos em `data/products.json`, pode migrá-los para o MongoDB Atlas inserindo os documentos na collection `products`.
-
-Cada documento deve manter a estrutura:
-
-```json
-{
-  "id": 1,
-  "name": "Prato Executivo Frango",
-  "desc": "Arroz, feijao, fritas e salada.",
-  "price": 30,
-  "category": "promocao",
-  "image": "Logo.PNG",
-  "available": true
-}
-```
-
-## Suporte ao frontend
-
-O frontend continua esperando a propriedade `id` numérica. O backend já devolve e grava os produtos nesse formato para manter compatibilidade.
-
+O frontend continua esperando a propriedade `id` numerica. O backend local e o backend do Netlify mantem esse formato.
