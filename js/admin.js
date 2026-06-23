@@ -56,6 +56,9 @@ export async function saveProduct(event) {
   try {
     if (product.id) {
       const updated = await updateProduct(product.id, product);
+      if (!updated) {
+        throw new Error("Nao foi possivel atualizar o produto.");
+      }
       products = products.map((item) => (item.id === updated.id ? updated : item));
       syncCartWithProduct(updated);
       showToast("Produto atualizado!");

@@ -73,7 +73,11 @@ async function readSeedProducts() {
 
 export async function loadProducts() {
   const products = await requestOrNull("/api/products", { method: "GET" });
-  if (Array.isArray(products)) return products.map(normalizeProduct);
+  if (Array.isArray(products)) {
+    const normalized = products.map(normalizeProduct);
+    writeLocalProducts(normalized);
+    return normalized;
+  }
 
   const localProducts = readLocalProducts();
   if (localProducts.length) return localProducts;
@@ -107,11 +111,11 @@ export async function updateProduct(id, product) {
   if (updated) return normalizeProduct(updated);
 
   const list = readLocalProducts();
-  const next = list.map((item) =>
-    item.id === id ? normalizeProduct({ ...item, ...product, id }) : item
-  );
+  const next = list.length
+    ? list.map((item) => (item.id === id ? normalizeProduct({ ...item, ...product, id }) : item))
+    : [normalizeProduct({ ...product, id })];
   writeLocalProducts(next);
-  return next.find((item) => item.id === id);
+  return next.find((item) => item.id === id) || next[0];
 }
 
 export async function deleteProductById(id) {
