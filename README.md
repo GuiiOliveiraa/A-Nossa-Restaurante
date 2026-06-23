@@ -1,214 +1,173 @@
-# A Nossa Restaurante - Cardapio Digital
+# A Nossa Restaurante
 
-## Sobre o Projeto
-
-O **A Nossa Restaurante - Cardapio Digital** foi desenvolvido para modernizar o atendimento do restaurante, oferecendo uma experiencia pratica e intuitiva para os clientes por meio de um sistema de pedidos online.
-
-A plataforma foi pensada com foco em dispositivos moveis, permitindo visualizar o cardapio, adicionar produtos ao carrinho e finalizar pedidos diretamente pelo WhatsApp.
-
-Tambem existe uma area administrativa para gerenciamento dos produtos exibidos no cardapio.
-
----
+Sistema de cardápio digital com carrinho, checkout via WhatsApp e área administrativa protegida.
 
 ## Funcionalidades
 
-- Cardapio online com pratos, bebidas e sobremesas
-- Exibicao de precos e descricoes dos produtos
-- Sistema de carrinho com adicao, remocao e controle de quantidade
-- Finalizacao do pedido via WhatsApp
-- Coleta de nome, endereco, forma de pagamento e observacoes do cliente
-- Painel administrativo para cadastrar, editar, remover e ativar/desativar produtos
-- Aba "Monte o seu prato" com combinacoes personalizadas
-- Modo contraste e modo noturno com preferencia salva no navegador
-- Fallback para funcionamento no Netlify com rotas SPA e armazenamento local dos produtos
+- Cardápio online por categorias
+- Carrinho com quantidade, remoção e total
+- Montagem de prato personalizado
+- Login administrativo com JWT em cookie
+- CRUD de produtos via Netlify Functions
+- Modo noturno
+- Modo alto contraste amarelo e preto
+- Deploy pronto para Netlify
 
----
-
-## Tecnologias Utilizadas
-
-### Frontend
+## Tecnologias
 
 - HTML5
 - CSS3
 - JavaScript modular
-
-### Backend
-
 - Node.js
-- Express
+- Netlify Functions
+- MongoDB Atlas
 - JWT
-- Cookie Parser
 - bcryptjs
 
----
+## Como conectar o MongoDB Atlas
 
-## Equipe - Equipe 01
+1. Crie uma conta em https://www.mongodb.com/atlas
+2. Crie um cluster gratuito ou pago.
+3. Crie um usuário de banco de dados.
+4. Em `Network Access`, libere o IP que vai acessar o banco.
+5. Copie a connection string em `Connect > Drivers`.
+6. No projeto, configure a variável `MONGODB_URI` com essa string.
 
-| Integrante | Funcao | Responsabilidades |
-|---|---|---|
-| Caio Nakahara | Lider | Planejamento e organizacao do projeto |
-| Samuel Duarte | UI/UX Design | Identidade visual e experiencia do usuario |
-| Joao Vitor | Marketing | Estrategias de divulgacao e publico-alvo |
-| Davi Duarte | QA | Testes e correcao de erros |
-| Guilherme Oliveira | Programacao | Desenvolvimento em HTML, CSS e JavaScript |
+Exemplo:
 
----
+```env
+MONGODB_URI=mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+```
 
-## Beneficios do Projeto
+No Netlify, essa variável deve ser cadastrada em:
 
-- Maior visibilidade digital para o restaurante
-- Facilidade de acesso por dispositivos moveis
-- Profissionalizacao do atendimento
-- Melhor organizacao dos pedidos
-- Otimizacao do sistema de delivery
-- Integracao pratica com WhatsApp
+- `Site settings`
+- `Environment variables`
 
----
+## Variáveis de ambiente
 
-## Informacoes Academicas
+Crie um arquivo `.env` com base em `.env.example`.
 
-Projeto desenvolvido para a disciplina **BRADWEB**  
-**1o Semestre - 2026**
+### Variáveis obrigatórias
 
-Orientacao: **Professora Ana Paula Muller Giancoli**
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `ADMIN_NAME`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
 
----
+### Variáveis opcionais
 
-## Preview do Projeto
+- `PORT`
 
-Area destinada para imagens ou GIFs do sistema.
+## Exemplo de `.env`
 
----
+```env
+PORT=3000
+JWT_SECRET=coloque-uma-chave-longa-e-segura-aqui
+ADMIN_NAME=Administrador
+ADMIN_EMAIL=admin@anossa.com
+ADMIN_PASSWORD=coloque-uma-senha-forte-aqui
+MONGODB_URI=mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+```
 
-## Status do Projeto
+## Como rodar localmente
 
-Em desenvolvimento.
-
----
-
-## Alteracoes Implementadas
-
-- Alteracao de quantidade diretamente no carrinho
-- Finalizacao com forma de pagamento e observacoes do cliente
-- Categorias: Promocao do dia, Cardapio normal, Bebidas e Sobremesas
-- AdminPage para cadastrar, editar, remover e ativar/desativar produtos
-- Aba "Monte o seu prato" com combinacoes personalizadas
-
----
-
-## Autenticacao da Area Administrativa
-
-### Como funciona
-
-O projeto agora depende de um backend em **Node.js + Express** para proteger a area administrativa com autenticacao real.
-
-Com isso:
-
-- a pagina publica continua acessivel normalmente
-- a rota `/admin` fica protegida
-- usuarios nao autenticados sao redirecionados para `/login`
-- o login cria uma sessao com **JWT em cookie httpOnly**
-- criar, editar e excluir produtos so funciona com sessao valida
-
-### Importante sobre o Live Server
-
-O **Live Server nao funciona sozinho** para esse projeto depois da autenticacao.
-
-Isso acontece porque ele serve apenas arquivos estaticos e nao executa o backend. Sem o backend, o frontend nao consegue acessar as rotas:
-
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `POST /api/products`
-- `PUT /api/products/:id`
-- `DELETE /api/products/:id`
-
-Por isso aparece o erro de inicializacao.
-
-### Como executar corretamente
-
-1. Instale as dependencias:
+1. Instale as dependências:
 
 ```bash
 npm install
 ```
 
-2. Crie o arquivo `.env` com base no modelo:
+2. Crie o `.env`:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-3. Inicie o servidor:
+3. Preencha o `.env` com sua string do MongoDB Atlas e suas credenciais.
+
+4. Inicie o servidor:
 
 ```bash
 npm run dev
 ```
 
-4. Abra no navegador:
+5. Abra:
 
 ```text
 http://localhost:3000
 ```
 
-### Versao no Netlify
+## Como publicar no Netlify
 
-O projeto agora inclui configuracao para deploy estatico no Netlify:
+1. Conecte o repositório no Netlify.
+2. Configure as variáveis de ambiente no painel do Netlify.
+3. Confirme:
 
-- `netlify.toml` faz o build publicar a raiz do projeto
-- todas as rotas sao redirecionadas para `index.html`
-- as telas `/`, `/login` e `/admin` continuam funcionando como SPA
-- quando a API local nao esta disponivel, o frontend usa `localStorage` para produtos e sessao administrativa
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `ADMIN_NAME`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
 
-Isso permite publicar o cardapio no Netlify sem depender do `server.js`.
+4. O arquivo [`netlify.toml`](./netlify.toml) já está configurado para:
 
-### Login padrao
+- publicar a raiz do projeto
+- redirecionar rotas SPA para `index.html`
+- expor a Function em `/api/*`
 
-Credenciais padrao do arquivo `.env.example`:
+## Estrutura da API
 
-- Usuario/E-mail: `admin@anossa.com`
-- Senha: `admin123`
+### Autenticação
 
-Voce pode alterar no `.env`:
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+
+### Produtos
+
+- `GET /api/products`
+- `POST /api/products`
+- `PUT /api/products/:id`
+- `DELETE /api/products/:id`
+
+## Observações sobre segurança
+
+- Senhas e segredo JWT devem ficar somente no `.env`
+- Nunca commite `.env` no repositório
+- Use uma `JWT_SECRET` longa e aleatória
+- Use um usuário de banco com permissões limitadas, se possível
+
+## Acesso administrativo
+
+As credenciais administrativas são definidas nas variáveis:
 
 - `ADMIN_NAME`
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
-- `JWT_SECRET`
-- `PORT`
 
-### Fluxo de acesso
+O login usa essas credenciais e cria um cookie `httpOnly` com JWT.
 
-1. O usuario clica no botao `Admin`
-2. Se nao estiver autenticado, vai para `/login`
-3. Ao informar credenciais validas, e redirecionado para `/admin`
-4. O backend grava o token em cookie `httpOnly`
-5. Ao atualizar a pagina, o frontend consulta `/api/auth/me`
-6. Se a sessao ainda for valida, o acesso continua liberado
-7. Ao clicar em `Sair`, a sessao e encerrada
+## Recuperação de produtos antigos
 
-### Rotas principais
+Se você já tinha produtos em `data/products.json`, pode migrá-los para o MongoDB Atlas inserindo os documentos na collection `products`.
 
-- `GET /` -> cardapio publico
-- `GET /login` -> tela de login
-- `GET /admin` -> painel administrativo protegido
-- `POST /api/auth/login` -> autenticacao
-- `POST /api/auth/logout` -> logout
-- `GET /api/auth/me` -> valida a sessao atual
-- `GET /api/products` -> lista os produtos
-- `POST /api/products` -> cria produto autenticado
-- `PUT /api/products/:id` -> edita produto autenticado
-- `DELETE /api/products/:id` -> remove produto autenticado
+Cada documento deve manter a estrutura:
 
-### Seguranca aplicada
+```json
+{
+  "id": 1,
+  "name": "Prato Executivo Frango",
+  "desc": "Arroz, feijao, fritas e salada.",
+  "price": 30,
+  "category": "promocao",
+  "image": "Logo.PNG",
+  "available": true
+}
+```
 
-- protecao real da rota `/admin`
-- token fora do `localStorage`
-- cookie `httpOnly`
-- sessao persistida entre recarregamentos
-- mensagens de erro para credenciais invalidas
-- bloqueio do CRUD administrativo sem autenticacao
+## Suporte ao frontend
 
-### Observacao
+O frontend continua esperando a propriedade `id` numérica. O backend já devolve e grava os produtos nesse formato para manter compatibilidade.
 
-Essas credenciais sao apenas de exemplo para desenvolvimento.
-Em producao, o ideal e trocar a senha, alterar o `JWT_SECRET`, usar HTTPS e armazenar usuarios em banco de dados.

@@ -1,24 +1,41 @@
-const fs = require("fs");
-const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { MongoClient } = require("mongodb");
 
-const PRODUCTS_FILE = path.join(process.cwd(), "data", "products.json");
-const JWT_SECRET = process.env.JWT_SECRET || "troque-esta-chave-em-producao";
+const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_COOKIE = "a_nossa_admin_token";
-const ADMIN_NAME = process.env.ADMIN_NAME || "Administrador";
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@anossa.com").toLowerCase();
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+const ADMIN_NAME = process.env.ADMIN_NAME;
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-function readProducts() {
-  const raw = fs.readFileSync(PRODUCTS_FILE, "utf-8");
-  const parsed = JSON.parse(raw);
-  return Array.isArray(parsed) ? parsed : [];
+let client;
+let clientPromise;
+
+if (MONGODB_URI) {
+  client = new MongoClient(MONGODB_URI);
 }
 
-function writeProducts(products) {
-  fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
+function getClient() {
+  if (!client) {
+    throw new Error("Variavel MONGODB_URI nao configurada.");
+  }
+
+  if (!clientPromise) {
+    clientPromise = client.connect();
+  }
+
+  return clientPromise;
+}
+
+async function getDb() {
+  const connectedClient = await getClient();
+  return connectedClient.db("anossa_db");
+}
+
+async function getProductsCollection() {
+  const db = await getDb();
+  return db.collection("products");
 }
 
 function parseCookies(event) {
@@ -85,18 +102,76 @@ function validateProduct(product) {
   return null;
 }
 
+function normalizeProduct(product) {
+  const id = product.id ?? (product._id ? product._id.toString() : Date.now());
+
+  return {
+    id: typeof id === "number" ? id : Number.isNaN(Number(id)) ? Date.now() : Number(id),
+    name: String(product.name || "").trim(),
+    desc: String(product.desc || "").trim(),
+    price: Number(product.price),
+    category: String(product.category || "").trim(),
+    image: String(product.image || "Logo.PNG").trim() || "Logo.PNG",
+    available: product.available !== false
+  };
+}
+
+function getEnvStatus() {
+  return {
+    MONGODB_URI: Boolean(process.env.MONGODB_URI),
+    JWT_SECRET: Boolean(process.env.JWT_SECRET),
+    ADMIN_EMAIL: Boolean(process.env.ADMIN_EMAIL),
+    ADMIN_PASSWORD: Boolean(process.env.ADMIN_PASSWORD)
+  };
+}
+
+function hasRequiredEnv() {
+  return Boolean(MONGODB_URI && JWT_SECRET && ADMIN_NAME && ADMIN_EMAIL && ADMIN_PASSWORD);
+}
+
 exports.handler = async (event) => {
   const { httpMethod, path: requestPath, body } = event;
   const route = requestPath.replace(/^\/(?:\.netlify\/functions\/api|api)/, "") || "/";
   const segments = route.split("/").filter(Boolean);
-  const adminUser = {
-    id: 1,
-    name: ADMIN_NAME,
-    email: ADMIN_EMAIL,
-    passwordHash: ADMIN_PASSWORD_HASH
-  };
 
   try {
+    if (segments[0] === "health" && httpMethod === "GET") {
+      const env = getEnvStatus();
+      let mongodb = false;
+      let mongodbError = null;
+
+      if (env.MONGODB_URI) {
+        try {
+          const db = await getDb();
+          await db.command({ ping: 1 });
+          mongodb = true;
+        } catch (error) {
+          mongodbError = error.message || "Falha ao conectar no MongoDB.";
+        }
+      }
+
+      return json(200, {
+        ok: mongodb && env.JWT_SECRET && env.ADMIN_EMAIL && env.ADMIN_PASSWORD,
+        mongodb,
+        env,
+        ...(mongodbError ? { mongodbError } : {})
+      });
+    }
+
+    if (!hasRequiredEnv()) {
+      return json(500, {
+        message:
+          "Variaveis de ambiente ausentes. Configure MONGODB_URI, JWT_SECRET, ADMIN_NAME, ADMIN_EMAIL e ADMIN_PASSWORD."
+      });
+    }
+
+    const adminUser = {
+      id: 1,
+      name: ADMIN_NAME,
+      email: ADMIN_EMAIL,
+      passwordHash: bcrypt.hashSync(ADMIN_PASSWORD, 10)
+    };
+
     if (segments[0] === "auth" && segments[1] === "login" && httpMethod === "POST") {
       const payload = JSON.parse(body || "{}");
       const identifier = String(payload.identifier || "").trim().toLowerCase();
@@ -137,8 +212,11 @@ exports.handler = async (event) => {
       return json(200, { user: sanitizeUser(adminUser) });
     }
 
+    const productsCollection = await getProductsCollection();
+
     if (segments[0] === "products" && httpMethod === "GET") {
-      return json(200, readProducts());
+      const products = await productsCollection.find({}).toArray();
+      return json(200, products.map(normalizeProduct));
     }
 
     if (segments[0] === "products" && httpMethod === "POST") {
@@ -147,8 +225,7 @@ exports.handler = async (event) => {
       const validationError = validateProduct(incoming);
       if (validationError) return json(400, { message: validationError });
 
-      const products = readProducts();
-      const product = {
+      const product = normalizeProduct({
         id: Date.now(),
         name: String(incoming.name).trim(),
         desc: String(incoming.desc).trim(),
@@ -156,9 +233,9 @@ exports.handler = async (event) => {
         category: String(incoming.category).trim(),
         image: String(incoming.image || "Logo.PNG").trim() || "Logo.PNG",
         available: Boolean(incoming.available)
-      };
-      products.push(product);
-      writeProducts(products);
+      });
+
+      await productsCollection.insertOne(product);
       return json(201, product);
     }
 
@@ -170,12 +247,8 @@ exports.handler = async (event) => {
       if (!productId) return json(400, { message: "Produto invalido." });
       if (validationError) return json(400, { message: validationError });
 
-      const products = readProducts();
-      const index = products.findIndex((product) => product.id === productId);
-      if (index < 0) return json(404, { message: "Produto nao encontrado." });
-
-      products[index] = {
-        ...products[index],
+      const updatedProduct = {
+        id: productId,
         name: String(incoming.name).trim(),
         desc: String(incoming.desc).trim(),
         price: Number(incoming.price),
@@ -183,19 +256,26 @@ exports.handler = async (event) => {
         image: String(incoming.image || "Logo.PNG").trim() || "Logo.PNG",
         available: Boolean(incoming.available)
       };
-      writeProducts(products);
-      return json(200, products[index]);
+
+      const result = await productsCollection.updateOne(
+        { id: productId },
+        { $set: updatedProduct }
+      );
+
+      if (!result.matchedCount) {
+        return json(404, { message: "Produto nao encontrado." });
+      }
+
+      return json(200, updatedProduct);
     }
 
     if (segments[0] === "products" && segments[1] && httpMethod === "DELETE") {
       if (!requireAuth(event)) return json(401, { message: "Sessao expirada. Faca login novamente." });
       const productId = Number(segments[1]);
-      const products = readProducts();
-      const index = products.findIndex((product) => product.id === productId);
-      if (index < 0) return json(404, { message: "Produto nao encontrado." });
-
-      products.splice(index, 1);
-      writeProducts(products);
+      const result = await productsCollection.deleteOne({ id: productId });
+      if (!result.deletedCount) {
+        return json(404, { message: "Produto nao encontrado." });
+      }
       return { statusCode: 204, headers: {}, body: "" };
     }
 
