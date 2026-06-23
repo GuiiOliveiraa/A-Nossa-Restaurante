@@ -4,7 +4,7 @@ const { MongoClient } = require("mongodb");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_COOKIE = "a_nossa_admin_token";
-const ADMIN_NAME = process.env.ADMIN_NAME;
+const ADMIN_NAME = process.env.ADMIN_NAME || "Administrador";
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -126,7 +126,7 @@ function getEnvStatus() {
 }
 
 function hasRequiredEnv() {
-  return Boolean(MONGODB_URI && JWT_SECRET && ADMIN_NAME && ADMIN_EMAIL && ADMIN_PASSWORD);
+  return Boolean(MONGODB_URI && JWT_SECRET && ADMIN_EMAIL && ADMIN_PASSWORD);
 }
 
 exports.handler = async (event) => {
@@ -161,7 +161,7 @@ exports.handler = async (event) => {
     if (!hasRequiredEnv()) {
       return json(500, {
         message:
-          "Variaveis de ambiente ausentes. Configure MONGODB_URI, JWT_SECRET, ADMIN_NAME, ADMIN_EMAIL e ADMIN_PASSWORD."
+          "Variaveis de ambiente ausentes. Configure MONGODB_URI, JWT_SECRET, ADMIN_EMAIL e ADMIN_PASSWORD."
       });
     }
 
