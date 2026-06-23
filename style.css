@@ -12,6 +12,32 @@
     --shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
 }
 
+body[data-theme="contrast"] {
+    --surface: #fff9db;
+    --background: #000000;
+    --panel: #fff3a3;
+    --text: #000000;
+    --text-muted: #1f1f1f;
+    --line: #000000;
+    --primary: #ffcc00;
+    --primary-dark: #d6a800;
+    --success: #ffe066;
+    --shadow: 0 0 0 3px rgba(255, 204, 0, 0.35);
+}
+
+body[data-theme="night"] {
+    --surface: #121417;
+    --background: #0a0c10;
+    --panel: #171b21;
+    --text: #f5f7fa;
+    --text-muted: #b1bac7;
+    --line: #2a313d;
+    --primary: #ff6a7a;
+    --primary-dark: #ff3d57;
+    --success: #59d98e;
+    --shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -113,6 +139,7 @@ button {
 }
 
 .admin-trigger,
+.theme-trigger,
 .cart-trigger,
 .btn-secondary,
 .btn-danger,
@@ -129,6 +156,55 @@ button {
     padding: 11px 14px;
 }
 
+.theme-trigger {
+    padding: 11px 12px;
+    background: var(--panel);
+}
+
+.theme-trigger[aria-pressed="true"] {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+}
+
+body[data-theme="contrast"] .main-header,
+body[data-theme="contrast"] .side-cart,
+body[data-theme="contrast"] .modal-content,
+body[data-theme="contrast"] .auth-card,
+body[data-theme="contrast"] .product-card,
+body[data-theme="contrast"] .builder-panel,
+body[data-theme="contrast"] .admin-form,
+body[data-theme="contrast"] .admin-product,
+body[data-theme="contrast"] .cart-item,
+body[data-theme="contrast"] .empty-state {
+    box-shadow: var(--shadow);
+}
+
+body[data-theme="contrast"] .cart-trigger,
+body[data-theme="contrast"] .btn-primary,
+body[data-theme="contrast"] .btn-checkout,
+body[data-theme="contrast"] .category-tab.active,
+body[data-theme="contrast"] .theme-trigger[aria-pressed="true"] {
+    background: var(--primary);
+    color: #000;
+    border-color: #000;
+}
+
+body[data-theme="contrast"] .btn-secondary,
+body[data-theme="contrast"] .btn-danger,
+body[data-theme="contrast"] .admin-trigger,
+body[data-theme="contrast"] .theme-trigger {
+    background: #fff3a3;
+    color: #000;
+    border-color: #000;
+}
+
+body[data-theme="contrast"] .category-pill,
+body[data-theme="contrast"] .status-online {
+    background: #ffcc00;
+    color: #000;
+}
+
 .cart-trigger {
     background: #111;
     color: white;
@@ -138,6 +214,12 @@ button {
     gap: 8px;
     position: relative;
     border-color: #111;
+}
+
+body[data-theme="night"] .cart-trigger {
+    background: #f5f7fa;
+    color: #111;
+    border-color: #f5f7fa;
 }
 
 #cart-counter {

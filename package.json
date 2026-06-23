@@ -4,6 +4,7 @@
   "description": "Sistema de delivery com painel administrativo protegido por autenticacao.",
   "main": "server.js",
   "scripts": {
+    "build": "node -e \"console.log('No build step needed')\"",
     "dev": "node --watch server.js",
     "start": "node server.js"
   },

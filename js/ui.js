@@ -15,6 +15,39 @@ export function showToast(message) {
   setTimeout(() => toast.remove(), 3500);
 }
 
+const THEME_STORAGE_KEY = "a_nossa_theme_mode";
+const THEME_CONTRAST = "contrast";
+const THEME_NIGHT = "night";
+
+function setThemeState(theme) {
+  document.body.dataset.theme = theme || "";
+
+  const contrastBtn = document.getElementById("btn-contrast-mode");
+  const nightBtn = document.getElementById("btn-night-mode");
+
+  if (contrastBtn) contrastBtn.setAttribute("aria-pressed", theme === THEME_CONTRAST ? "true" : "false");
+  if (nightBtn) nightBtn.setAttribute("aria-pressed", theme === THEME_NIGHT ? "true" : "false");
+}
+
+export function applySavedTheme() {
+  const theme = localStorage.getItem(THEME_STORAGE_KEY) || "";
+  setThemeState(theme);
+}
+
+export function toggleContrastMode() {
+  const current = document.body.dataset.theme || "";
+  const next = current === THEME_CONTRAST ? "" : THEME_CONTRAST;
+  localStorage.setItem(THEME_STORAGE_KEY, next);
+  setThemeState(next);
+}
+
+export function toggleNightMode() {
+  const current = document.body.dataset.theme || "";
+  const next = current === THEME_NIGHT ? "" : THEME_NIGHT;
+  localStorage.setItem(THEME_STORAGE_KEY, next);
+  setThemeState(next);
+}
+
 export function openModal(htmlContent) {
   document.getElementById("modal-content-area").innerHTML = htmlContent;
   document.getElementById("modal-overlay").classList.remove("modal-hidden");

@@ -19,6 +19,8 @@ Tambem existe uma area administrativa para gerenciamento dos produtos exibidos n
 - Coleta de nome, endereco, forma de pagamento e observacoes do cliente
 - Painel administrativo para cadastrar, editar, remover e ativar/desativar produtos
 - Aba "Monte o seu prato" com combinacoes personalizadas
+- Modo contraste e modo noturno com preferencia salva no navegador
+- Fallback para funcionamento no Netlify com rotas SPA e armazenamento local dos produtos
 
 ---
 
@@ -147,6 +149,17 @@ npm run dev
 ```text
 http://localhost:3000
 ```
+
+### Versao no Netlify
+
+O projeto agora inclui configuracao para deploy estatico no Netlify:
+
+- `netlify.toml` faz o build publicar a raiz do projeto
+- todas as rotas sao redirecionadas para `index.html`
+- as telas `/`, `/login` e `/admin` continuam funcionando como SPA
+- quando a API local nao esta disponivel, o frontend usa `localStorage` para produtos e sessao administrativa
+
+Isso permite publicar o cardapio no Netlify sem depender do `server.js`.
 
 ### Login padrao
 

@@ -2,7 +2,7 @@
   {
     "id": 1,
     "name": "Prato Executivo Frango",
-    "price": 50,
+    "price": 30,
     "desc": "Arroz, feijao, fritas e salada.",
     "category": "promocao",
     "image": "Logo.PNG",
@@ -33,7 +33,7 @@
     "desc": "500ml espremido na hora.",
     "category": "bebidas",
     "image": "Logo.PNG",
-    "available": true
+    "available": false
   },
   {
     "id": 5,

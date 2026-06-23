@@ -13,6 +13,9 @@ import {
   showAdminPage,
   setLoginError,
   clearLoginForm,
+  applySavedTheme,
+  toggleContrastMode,
+  toggleNightMode,
   renderCategoryTabs,
   renderProductGrid,
   renderPlateBuilder,
@@ -177,6 +180,8 @@ async function syncRouteWithSession() {
 }
 
 function bindListeners() {
+  document.getElementById("btn-contrast-mode").addEventListener("click", toggleContrastMode);
+  document.getElementById("btn-night-mode").addEventListener("click", toggleNightMode);
   document.querySelector(".cart-trigger").addEventListener("click", toggleCart);
   document.querySelector(".admin-trigger").addEventListener("click", goToAdminPage);
 
@@ -198,6 +203,7 @@ function bindListeners() {
 }
 
 async function init() {
+  applySavedTheme();
   const products = await loadProducts();
 
   initAdmin(products, (updated) => {
